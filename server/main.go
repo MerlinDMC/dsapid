@@ -86,6 +86,18 @@ func main() {
 		handler.Use(middleware.JsonLogger())
 	}
 
+	if config.MountUi != "" {
+		router.Any("/", func(res http.ResponseWriter, req *http.Request) {
+			http.Redirect(res, req, "/ui/", http.StatusMovedPermanently)
+		})
+
+		handler.Use(martini.Static(config.MountUi, martini.StaticOptions{
+			Prefix:      "/ui",
+			IndexFile:   "index.html",
+			SkipLogging: true,
+		}))
+	}
+
 	for _, source := range config.SyncSources {
 		if source.Active {
 			sync_manager.NewSyncer(source)

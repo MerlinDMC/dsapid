@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/codegangsta/martini"
 	"net/http"
+	"strings"
 )
 
 type OutputEncoder interface {
@@ -59,6 +60,10 @@ func (me prettyJsonEncoder) MustEncode(v ...interface{}) []byte {
 
 func EncodeOutput(prettify bool) martini.Handler {
 	return func(ctx martini.Context, res http.ResponseWriter, req *http.Request) {
+		if strings.HasPrefix(req.RequestURI, "/ui") {
+			return
+		}
+
 		if prettify {
 			ctx.MapTo(prettyJsonEncoder{}, (*OutputEncoder)(nil))
 		} else {
