@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/MerlinDMC/dsapid/server/handler"
+	"github.com/MerlinDMC/dsapid/server/middleware"
 	"github.com/codegangsta/martini"
 )
 
@@ -24,4 +25,7 @@ func registerRoutes(router martini.Router) {
 	// public api
 	router.Get("/api/datasets", handler.ApiDatasetsList)
 	router.Get("/api/export/:id", handler.ApiDatasetExport)
+
+	// private api - upload
+	router.Post("/api/upload", middleware.RequireRoles("dataset.upload"), handler.ApiPostFileUpload)
 }
