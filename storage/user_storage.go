@@ -30,6 +30,8 @@ func NewUserStorage(filename string) UserStorage {
 	store.map_email_id = make(map[string]string)
 	store.map_token_id = make(map[string]string)
 
+	store.load()
+
 	return store
 }
 
@@ -72,8 +74,6 @@ func (me *jsonUserStorage) EnsureExists(id, name string) *dsapid.UserResource {
 }
 
 func (me *jsonUserStorage) Get(id string) *dsapid.UserResource {
-	me.load()
-
 	if v, ok := me.users[id]; ok {
 		return v
 	}
@@ -82,16 +82,12 @@ func (me *jsonUserStorage) Get(id string) *dsapid.UserResource {
 }
 
 func (me *jsonUserStorage) GetOK(id string) (*dsapid.UserResource, bool) {
-	me.load()
-
 	v, ok := me.users[id]
 
 	return v, ok
 }
 
 func (me *jsonUserStorage) FindByName(name string) (*dsapid.UserResource, error) {
-	me.load()
-
 	if v, ok := me.map_name_id[name]; ok {
 		return me.users[v], nil
 	}
@@ -100,8 +96,6 @@ func (me *jsonUserStorage) FindByName(name string) (*dsapid.UserResource, error)
 }
 
 func (me *jsonUserStorage) FindByEmail(email string) (*dsapid.UserResource, error) {
-	me.load()
-
 	if v, ok := me.map_email_id[email]; ok {
 		return me.users[v], nil
 	}
@@ -110,8 +104,6 @@ func (me *jsonUserStorage) FindByEmail(email string) (*dsapid.UserResource, erro
 }
 
 func (me *jsonUserStorage) FindByToken(token string) (*dsapid.UserResource, error) {
-	me.load()
-
 	if v, ok := me.map_token_id[token]; ok {
 		return me.users[v], nil
 	}
