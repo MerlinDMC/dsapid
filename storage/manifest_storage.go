@@ -15,7 +15,9 @@ const (
 )
 
 type ManifestStorage interface {
-	Add(string, *dsapid.ManifestResource)
+	Add(string, *dsapid.ManifestResource) error
+	Update(string, *dsapid.ManifestResource) error
+	Delete(string)
 	Get(string) *dsapid.ManifestResource
 	GetOK(string) (*dsapid.ManifestResource, bool)
 	List() chan *dsapid.ManifestResource
@@ -54,14 +56,34 @@ func NewManifestStorage(basedir string) ManifestStorage {
 	return storage
 }
 
-func (me *filesystemManifestStorage) Add(id string, manifest *dsapid.ManifestResource) {
+func (me *filesystemManifestStorage) Add(id string, manifest *dsapid.ManifestResource) error {
 	os.MkdirAll(path.Join(me.basedir, id), 0770)
 
 	if data, err := json.MarshalIndent(manifest, "", "  "); err == nil {
-		err = ioutil.WriteFile(path.Join(me.basedir, id, defaultManifestFilename), data, 0666)
+		if err = ioutil.WriteFile(path.Join(me.basedir, id, defaultManifestFilename), data, 0666); err != nil {
+			return err
+		}
 	}
 
 	me.add(id, manifest)
+
+	return nil
+}
+
+func (me *filesystemManifestStorage) Update(id string, manifest *dsapid.ManifestResource) error {
+	if data, err := json.MarshalIndent(manifest, "", "  "); err == nil {
+		if err = ioutil.WriteFile(path.Join(me.basedir, id, defaultManifestFilename), data, 0666); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (me *filesystemManifestStorage) Delete(id string) {
+	os.RemoveAll(path.Join(me.basedir, id))
+
+	me.delete(id)
 }
 
 func (me *filesystemManifestStorage) Get(id string) *dsapid.ManifestResource {
@@ -122,6 +144,20 @@ func (me *filesystemManifestStorage) add(id string, manifest *dsapid.ManifestRes
 	me.byDate = append(me.byDate, manifest)
 
 	sort.Sort(ManifestsByPublishedAt(me.byDate))
+}
+
+func (me *filesystemManifestStorage) delete(id string) {
+	for i, m := range me.byDate {
+		if m.Uuid == id {
+			me.byDate = append(me.byDate[:i], me.byDate[i+1:]...)
+
+			break
+		}
+	}
+
+	if _, ok := me.manifests[id]; ok {
+		delete(me.manifests, id)
+	}
 }
 
 func (me *filesystemManifestStorage) load() {
