@@ -37,7 +37,7 @@ func DsapiList(encoder middleware.OutputEncoder, params martini.Params, manifest
 
 func DsapiDetail(encoder middleware.OutputEncoder, params martini.Params, manifests storage.ManifestStorage, converter converter.DsapiManifestEncoder) (int, []byte) {
 	if manifest, ok := manifests.GetOK(params["id"]); ok {
-		return http.StatusOK, encoder.MustEncode(manifest)
+		return http.StatusOK, encoder.MustEncode(converter.Encode(manifest))
 	}
 
 	return http.StatusNotFound, []byte("Not found")
