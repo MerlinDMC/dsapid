@@ -24,6 +24,7 @@ func registerRoutes(router martini.Router) {
 
 	// public api
 	router.Get("/api/datasets", handler.ApiDatasetsList)
+	router.Get("/api/datasets/:id", handler.ApiDatasetsDetail)
 	router.Get("/api/export/:id", handler.ApiDatasetExport)
 
 	// private api - upload

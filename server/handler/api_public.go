@@ -39,6 +39,14 @@ func ApiDatasetsList(encoder middleware.OutputEncoder, params martini.Params, ma
 	return http.StatusOK, encoder.MustEncode(data)
 }
 
+func ApiDatasetsDetail(encoder middleware.OutputEncoder, params martini.Params, manifests storage.ManifestStorage, converter converter.DsapiManifestEncoder, user middleware.User, req *http.Request) (int, []byte) {
+	if manifest, ok := manifests.GetOK(params["id"]); ok {
+		return http.StatusOK, encoder.MustEncode(converter.EncodeWithExtra(manifest))
+	}
+
+	return http.StatusNotFound, []byte("Not found")
+}
+
 func ApiDatasetExport(encoder middleware.OutputEncoder, params martini.Params, manifests storage.ManifestStorage, dsapi_converter converter.DsapiManifestEncoder, imgapi_converter converter.ImgapiManifestEncoder, user middleware.User, res http.ResponseWriter) {
 	if manifest, ok := manifests.GetOK(params["id"]); ok {
 		res.Header().Set("Content-Type", "application/octet-stream")
