@@ -11,9 +11,10 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"time"
 )
 
-func ApiPostFileUpload(encoder middleware.OutputEncoder, params martini.Params, manifests storage.ManifestStorage, users storage.UserStorage, req *http.Request) (int, []byte) {
+func ApiPostFileUpload(encoder middleware.OutputEncoder, params martini.Params, manifests storage.ManifestStorage, users storage.UserStorage, user middleware.User, req *http.Request) (int, []byte) {
 	var manifest *dsapid.ManifestResource
 
 	if file, _, err := req.FormFile("manifest"); err == nil {
@@ -32,10 +33,21 @@ func ApiPostFileUpload(encoder middleware.OutputEncoder, params martini.Params, 
 
 			logger.Infof("uploading image: %s (%s v%s)", manifest.Uuid, manifest.Name, manifest.Version)
 
+			manifest.PublishedAt = time.Now()
+			manifest.State = dsapid.ManifestStatePending
+
+			if !user.HasRoles(dsapid.UserRoleDatasetManage) && !user.HasRoles(dsapid.UserRoleDatasetAdmin) {
+				manifest.Owner = user.GetId()
+			}
+
+			if user.HasRoles(dsapid.UserRoleDatasetAdmin) {
+				manifest.State = dsapid.ManifestStateActive
+			}
+
 			if file, _, err := req.FormFile("file"); err == nil {
 				if err = os.MkdirAll(manifests.ManifestPath(manifest), 0770); err == nil {
 					if file_out, err := os.Create(manifests.FilePath(manifest, &manifest.Files[0])); err == nil {
-						if _, err = io.Copy(file_out, file); err == nil {
+						if n, err := io.Copy(file_out, file); err == nil && n == manifest.Files[0].Size {
 							manifests.Add(manifest.Uuid, manifest)
 
 							return http.StatusOK, encoder.MustEncode(manifest)
