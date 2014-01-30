@@ -14,7 +14,7 @@ import (
 	"os"
 )
 
-func ApiDatasetsList(encoder middleware.OutputEncoder, params martini.Params, manifests storage.ManifestStorage, converter converter.DsapiManifestEncoder, user middleware.User, req *http.Request) (int, []byte) {
+func ApiDatasetsList(encoder middleware.OutputEncoder, params martini.Params, manifests storage.ManifestStorage, user middleware.User, req *http.Request) (int, []byte) {
 	var data []interface{} = make([]interface{}, 0)
 	var filters []storage.ManifestFilter = []storage.ManifestFilter{storage.FilterManifestEnabled()}
 
@@ -33,7 +33,7 @@ func ApiDatasetsList(encoder middleware.OutputEncoder, params martini.Params, ma
 	}
 
 	for manifest := range manifests.Filter(filters...) {
-		data = append(data, converter.EncodeWithExtra(manifest))
+		data = append(data, manifest)
 	}
 
 	return http.StatusOK, encoder.MustEncode(data)
@@ -41,7 +41,7 @@ func ApiDatasetsList(encoder middleware.OutputEncoder, params martini.Params, ma
 
 func ApiDatasetsDetail(encoder middleware.OutputEncoder, params martini.Params, manifests storage.ManifestStorage, converter converter.DsapiManifestEncoder, user middleware.User, req *http.Request) (int, []byte) {
 	if manifest, ok := manifests.GetOK(params["id"]); ok {
-		return http.StatusOK, encoder.MustEncode(converter.EncodeWithExtra(manifest))
+		return http.StatusOK, encoder.MustEncode(manifest)
 	}
 
 	return http.StatusNotFound, []byte("Not found")
