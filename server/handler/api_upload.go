@@ -1,6 +1,9 @@
 package handler
 
 import (
+	"crypto/md5"
+	"crypto/sha1"
+	"encoding/hex"
 	"encoding/json"
 	"github.com/MerlinDMC/dsapid"
 	"github.com/MerlinDMC/dsapid/converter/decoder"
@@ -47,7 +50,30 @@ func ApiPostFileUpload(encoder middleware.OutputEncoder, params martini.Params, 
 			if file, _, err := req.FormFile("file"); err == nil {
 				if err = os.MkdirAll(manifests.ManifestPath(manifest), 0770); err == nil {
 					if file_out, err := os.Create(manifests.FilePath(manifest, &manifest.Files[0])); err == nil {
-						if n, err := io.Copy(file_out, file); err == nil && n == manifest.Files[0].Size {
+						defer file_out.Close()
+
+						hash_md5 := md5.New()
+						hash_sha1 := sha1.New()
+
+						writer := io.MultiWriter(hash_md5, hash_sha1, file_out)
+
+						if _, err := io.Copy(writer, file); err == nil {
+							md5_sum := hex.EncodeToString(hash_md5.Sum(nil))
+							sha1_sum := hex.EncodeToString(hash_sha1.Sum(nil))
+
+							if manifest.Files[0].Md5 != "" && manifest.Files[0].Md5 != md5_sum {
+								logger.Warnf("checksum mismatch: got %s expected %s", md5_sum, manifest.Files[0].Md5)
+								goto errCancel
+							}
+
+							if manifest.Files[0].Sha1 != "" && manifest.Files[0].Sha1 != sha1_sum {
+								logger.Warnf("checksum mismatch: got %s expected %s", sha1_sum, manifest.Files[0].Sha1)
+								goto errCancel
+							}
+
+							manifest.Files[0].Md5 = md5_sum
+							manifest.Files[0].Sha1 = sha1_sum
+
 							manifests.Add(manifest.Uuid, manifest)
 
 							return http.StatusOK, encoder.MustEncode(manifest)
@@ -56,6 +82,11 @@ func ApiPostFileUpload(encoder middleware.OutputEncoder, params martini.Params, 
 				}
 			}
 		}
+	}
+
+errCancel:
+	if manifest.Uuid != "" {
+		manifests.Delete(manifest.Uuid)
 	}
 
 	return http.StatusInternalServerError, encoder.MustEncode(dsapid.Table{
