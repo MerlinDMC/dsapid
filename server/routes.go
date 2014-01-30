@@ -13,19 +13,19 @@ func registerRoutes(router martini.Router) {
 	router.Get("/status", handler.CommonStatus)
 
 	// dsapi
-	router.Get("/datasets", handler.DsapiList)
-	router.Get("/datasets/:id", handler.DsapiDetail)
+	router.Get("/datasets", middleware.AllowCORS(), handler.DsapiList)
+	router.Get("/datasets/:id", middleware.AllowCORS(), handler.DsapiDetail)
 	router.Get("/datasets/:id/:path", handler.DsapiFile)
 
 	// imgapi
-	router.Get("/images", handler.ImgapiList)
-	router.Get("/images/:id", handler.ImgapiDetail)
+	router.Get("/images", middleware.AllowCORS(), handler.ImgapiList)
+	router.Get("/images/:id", middleware.AllowCORS(), handler.ImgapiDetail)
 	router.Get("/images/:id/file", handler.ImgapiFile)
 	router.Get("/images/:id/file:file_idx", handler.ImgapiFile)
 
 	// public api
-	router.Get("/api/datasets", handler.ApiDatasetsList)
-	router.Get("/api/datasets/:id", handler.ApiDatasetsDetail)
+	router.Get("/api/datasets", middleware.AllowCORS(), handler.ApiDatasetsList)
+	router.Get("/api/datasets/:id", middleware.AllowCORS(), handler.ApiDatasetsDetail)
 	router.Get("/api/export/:id", handler.ApiDatasetExport)
 
 	// private api - update
