@@ -3,6 +3,7 @@ package middleware
 import (
 	"encoding/base64"
 	"github.com/MerlinDMC/dsapid"
+	"github.com/MerlinDMC/dsapid/server/logger"
 	"github.com/MerlinDMC/dsapid/storage"
 	"github.com/codegangsta/martini"
 	"net/http"
@@ -12,7 +13,7 @@ import (
 type User interface {
 	GetId() string
 	GetName() string
-	HasRoles(...string) bool
+	HasRoles(...dsapid.UserRoleName) bool
 	IsGuest() bool
 	GetAuthInfo() interface{}
 }
@@ -40,8 +41,12 @@ func Auth(user_storage storage.UserStorage) martini.Handler {
 			}
 
 			if token != "" {
+				logger.Debugf("got auth token '%s'", token)
+
 				if v, err := user_storage.FindByToken(token); err == nil {
 					user = v
+
+					logger.Debugf("found matching user %s (%s)", user.Uuid, user.Name)
 				}
 			}
 		}
@@ -56,8 +61,10 @@ func Auth(user_storage storage.UserStorage) martini.Handler {
 	}
 }
 
-func RequireRoles(roles ...string) martini.Handler {
+func RequireRoles(roles ...dsapid.UserRoleName) martini.Handler {
 	return func(res http.ResponseWriter, user User) {
+		logger.Debugf("checking roles on user %s (%s)", user.GetId(), user.GetName())
+
 		if user.IsGuest() || !user.HasRoles(roles...) {
 			http.Error(res, "Not allowed", http.StatusUnauthorized)
 		}

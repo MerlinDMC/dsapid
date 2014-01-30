@@ -33,13 +33,13 @@ func (me *UserResource) GetName() string {
 	return me.Name
 }
 
-func (me *UserResource) HasRoles(roles ...string) bool {
+func (me *UserResource) HasRoles(roles ...UserRoleName) bool {
 	var matched_count int = 0
 
 nextRole:
 	for _, role := range roles {
 		for _, r := range me.Roles {
-			if UserRoleName(role) == r {
+			if role == r {
 				matched_count++
 				continue nextRole
 			}
@@ -125,6 +125,10 @@ const (
 
 	UserRoleAdmin UserRoleName = "admin"
 	UserRoleGuest UserRoleName = "guest"
+
+	UserRoleDatasetUpload UserRoleName = "s_dataset.upload"
+	UserRoleDatasetManage UserRoleName = "s_dataset.manage"
+	UserRoleDatasetAdmin  UserRoleName = "s_dataset.admin"
 
 	DefaultUserUuid string = "a979f956-12cb-4216-bf4c-ae73e6f14dde"
 	DefaultUserName string = "sdc"
