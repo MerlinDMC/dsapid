@@ -23,7 +23,6 @@ var (
 	flagMaxCpu       int
 	flagMaxFetches   int
 	flagLogDebug     bool
-	flagLogDebugMore bool
 	flagPrettifyJson bool
 )
 
@@ -33,10 +32,7 @@ func init() {
 	flag.IntVar(&flagMaxCpu, "max_cpu", 2, "number of processors to use")
 	flag.IntVar(&flagMaxFetches, "max_fetches", 2, "number of parallel sync fetches")
 	flag.BoolVar(&flagLogDebug, "debug", false, "display additional debug information")
-	flag.BoolVar(&flagLogDebugMore, "debug_more", false, "display extra information while running subcommands")
 	flag.BoolVar(&flagPrettifyJson, "prettify", false, "prettify json output")
-
-	logger.SetName("dsapid")
 }
 
 func main() {
@@ -48,6 +44,9 @@ func main() {
 		fmt.Printf("%s v%s\n", dsapid.AppName, dsapid.AppVersion)
 		os.Exit(0)
 	}
+
+	logger.SetName("dsapid")
+	logger.SetLevel(logger.ERROR)
 
 	var config Config = DefaultConfig()
 
@@ -64,7 +63,10 @@ func main() {
 	handler := martini.New()
 	handler.Action(router.Handle)
 
+	logger.Debugf("loading users from %s", config.UsersConfig)
 	user_storage := storage.NewUserStorage(config.UsersConfig)
+
+	logger.Debugf("loading datasets from %s", config.DataDir)
 	manifest_storage := storage.NewManifestStorage(config.DataDir)
 
 	sync_manager := sync.NewManager(flagMaxFetches, user_storage, manifest_storage)
