@@ -28,6 +28,9 @@ func registerRoutes(router martini.Router) {
 	router.Get("/api/datasets/:id", handler.ApiDatasetsDetail)
 	router.Get("/api/export/:id", handler.ApiDatasetExport)
 
+	// private api - update
+	router.Post("/api/datasets/:id", middleware.RequireRoles(dsapid.UserRoleDatasetManage), handler.ApiPostDatasetUpdate)
+
 	// private api - upload
 	router.Post("/api/upload", middleware.RequireRoles(dsapid.UserRoleDatasetUpload), handler.ApiPostFileUpload)
 }
