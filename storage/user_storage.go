@@ -17,6 +17,7 @@ type UserStorage interface {
 	FindByName(string) (*dsapid.UserResource, error)
 	FindByEmail(string) (*dsapid.UserResource, error)
 	FindByToken(string) (*dsapid.UserResource, error)
+	Dump() map[string]*dsapid.UserResource
 	GuestUser() *dsapid.UserResource
 }
 
@@ -109,6 +110,10 @@ func (me *jsonUserStorage) FindByToken(token string) (*dsapid.UserResource, erro
 	}
 
 	return nil, ErrStorageItemNotFound
+}
+
+func (me *jsonUserStorage) Dump() map[string]*dsapid.UserResource {
+	return me.users
 }
 
 func (me *jsonUserStorage) GuestUser() *dsapid.UserResource {

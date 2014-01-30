@@ -11,7 +11,7 @@ var (
 )
 
 func TestNewUserStorage(t *testing.T) {
-	storage := NewUserStorage(storageFilename)
+	storage := NewUserStorage(storageFilename).(*jsonUserStorage)
 
 	user1 := &dsapid.UserResource{
 		Uuid:  "test1",
@@ -56,7 +56,7 @@ func TestNewUserStorage(t *testing.T) {
 }
 
 func TestLoadStorage(t *testing.T) {
-	storage := NewUserStorage(storageFilename)
+	storage := NewUserStorage(storageFilename).(*jsonUserStorage)
 
 	storage.Get("") // dummy get to trigger load()
 
