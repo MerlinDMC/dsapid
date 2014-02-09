@@ -129,10 +129,28 @@ func (me *syncManager) processDownloadJobs() {
 					for file_idx, src := range job.files {
 						filename := me.manifests.FilePath(job.manifest, &job.manifest.Files[file_idx])
 
-						if err := me.downloadManifestFile(src, filename, &job.manifest.Files[file_idx]); err != nil {
-							logger.Errorf("download error: %s", err)
-						} else {
-							me.manifests.Add(job.manifest.Uuid, job.manifest)
+					retryFetch:
+						for retry := 0; retry < 3; retry++ {
+							if err := me.downloadManifestFile(src, filename, &job.manifest.Files[file_idx]); err != nil {
+								logger.Errorf("download error: %s", err)
+
+								// .. check size and maybe delete erroneous file
+								if fs, err := os.Stat(filename); err == nil {
+									if fs.Size() >= job.manifest.Files[file_idx].Size {
+										if err := os.Remove(filename); err != nil {
+											logger.Errorf("can't remove erroneous file: %s", err)
+										}
+									}
+								}
+
+								logger.Infof("retry download on file: %s", src.String())
+
+								continue retryFetch
+							} else {
+								me.manifests.Add(job.manifest.Uuid, job.manifest)
+
+								break
+							}
 						}
 					}
 				}
