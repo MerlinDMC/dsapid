@@ -13,16 +13,15 @@ type Config struct {
 	BaseUrl  string `json:"base_url,omitempty"`
 	MountUi  string `json:"mount_ui,omitempty"`
 
-	Http  ProtoConfig `json:"http,omitempty"`
-	Https ProtoConfig `json:"https,omitempty"`
+	Listen map[string]protoConfig `json:"listen,omitempty"`
 
 	DataDir     string                      `json:"datadir"`
 	UsersConfig string                      `json:"users"`
 	SyncSources []dsapid.SyncSourceResource `json:"sync,omitempty"`
 }
 
-type ProtoConfig struct {
-	ListenAddress string `json:"listen,omitempty"`
+type protoConfig struct {
+	ListenAddress string `json:"address,omitempty"`
 	UseSSL        bool   `json:"ssl,omitempty"`
 	Key           string `json:"key,omitempty"`
 	Cert          string `json:"cert,omitempty"`
@@ -32,9 +31,11 @@ func DefaultConfig() Config {
 	return Config{
 		Hostname: "localhost",
 		BaseUrl:  "http://localhost:8000/",
-		Http: ProtoConfig{
-			ListenAddress: "0.0.0.0:8000",
-			UseSSL:        false,
+		Listen: map[string]protoConfig{
+			"http": protoConfig{
+				ListenAddress: "0.0.0.0:8000",
+				UseSSL:        false,
+			},
 		},
 	}
 }

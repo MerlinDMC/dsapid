@@ -9,12 +9,13 @@ import (
 	"github.com/MerlinDMC/dsapid/converter/imgapi"
 	"github.com/MerlinDMC/dsapid/server/logger"
 	"github.com/MerlinDMC/dsapid/server/middleware"
-	"github.com/MerlinDMC/dsapid/server/sync"
+	dsapid_sync "github.com/MerlinDMC/dsapid/server/sync"
 	"github.com/MerlinDMC/dsapid/storage"
 	"github.com/codegangsta/martini"
 	"net/http"
 	"os"
 	"runtime"
+	"sync"
 )
 
 var (
@@ -22,7 +23,7 @@ var (
 	flagConfigFile   string
 	flagMaxCpu       int
 	flagMaxFetches   int
-	flagLogDebug     bool
+	flagLogLevel     string
 	flagPrettifyJson bool
 )
 
@@ -31,7 +32,7 @@ func init() {
 	flag.StringVar(&flagConfigFile, "config", "data/config.json", "configuration file")
 	flag.IntVar(&flagMaxCpu, "max_cpu", 2, "number of processors to use")
 	flag.IntVar(&flagMaxFetches, "max_fetches", 2, "number of parallel sync fetches")
-	flag.BoolVar(&flagLogDebug, "debug", false, "display additional debug information")
+	flag.StringVar(&flagLogLevel, "log_level", "error", "log level for console logs [trace,debug,info,warn,error,fatal]")
 	flag.BoolVar(&flagPrettifyJson, "prettify", false, "prettify json output")
 }
 
@@ -46,7 +47,27 @@ func main() {
 	}
 
 	logger.SetName("dsapid")
-	logger.SetLevel(logger.ERROR)
+
+	switch flagLogLevel {
+	case "trace":
+		logger.SetLevel(logger.TRACE)
+		break
+	case "debug":
+		logger.SetLevel(logger.DEBUG)
+		break
+	case "info":
+		logger.SetLevel(logger.INFO)
+		break
+	case "warn":
+		logger.SetLevel(logger.WARN)
+		break
+	case "error":
+		logger.SetLevel(logger.ERROR)
+		break
+	case "fatal":
+		logger.SetLevel(logger.FATAL)
+		break
+	}
 
 	var config Config = DefaultConfig()
 
@@ -69,12 +90,12 @@ func main() {
 	logger.Debugf("loading datasets from %s", config.DataDir)
 	manifest_storage := storage.NewManifestStorage(config.DataDir)
 
-	sync_manager := sync.NewManager(flagMaxFetches, user_storage, manifest_storage)
+	sync_manager := dsapid_sync.NewManager(flagMaxFetches, user_storage, manifest_storage)
 	sync_manager.Init()
 
 	handler.MapTo(user_storage, (*storage.UserStorage)(nil))
 	handler.MapTo(manifest_storage, (*storage.ManifestStorage)(nil))
-	handler.MapTo(sync_manager, (*sync.SyncManager)(nil))
+	handler.MapTo(sync_manager, (*dsapid_sync.SyncManager)(nil))
 
 	handler.MapTo(dsapi.NewEncoder(config.BaseUrl, user_storage), (*converter.DsapiManifestEncoder)(nil))
 	handler.MapTo(imgapi.NewEncoder(config.BaseUrl, user_storage), (*converter.ImgapiManifestEncoder)(nil))
@@ -82,9 +103,7 @@ func main() {
 	handler.Use(middleware.EncodeOutput(flagPrettifyJson))
 	handler.Use(middleware.Auth(user_storage))
 
-	if flagLogDebug {
-		logger.SetLevel(logger.DEBUG)
-
+	if logger.GetLevel() <= logger.INFO {
 		handler.Use(middleware.JsonLogger())
 	}
 
@@ -112,9 +131,37 @@ func main() {
 		os.Exit(2)
 	}
 
-	if config.Https.ListenAddress != "" {
-		go http.ListenAndServeTLS(config.Https.ListenAddress, config.Https.Cert, config.Https.Key, handler)
+	var wg sync.WaitGroup
+
+	for server_name, server_config := range config.Listen {
+		wg.Add(1)
+
+		logger.Infof("starting server %s...", server_name)
+
+		go startServer(server_config, handler, &wg)
 	}
 
-	http.ListenAndServe(config.Http.ListenAddress, handler)
+	logger.Infof("server running - waiting for shutdown")
+
+	wg.Wait()
+}
+
+func startServer(config protoConfig, handler http.Handler, wg *sync.WaitGroup) (err error) {
+	if config.UseSSL {
+		logger.Debugf("starting with ssl enabled at address %s", config.ListenAddress)
+
+		err = http.ListenAndServeTLS(config.ListenAddress, config.Cert, config.Key, handler)
+	} else {
+		logger.Debugf("starting at address %s", config.ListenAddress)
+
+		err = http.ListenAndServe(config.ListenAddress, handler)
+	}
+
+	if err != nil {
+		logger.Errorf("server terminated: %s", err)
+	}
+
+	wg.Done()
+
+	return err
 }

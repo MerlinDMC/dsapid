@@ -55,6 +55,10 @@ func SetLevel(v level) {
 	min_level = v
 }
 
+func GetLevel() level {
+	return min_level
+}
+
 func Trace(msg string) {
 	write(TRACE, msg)
 }
