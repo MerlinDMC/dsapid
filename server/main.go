@@ -31,7 +31,7 @@ func init() {
 	flag.BoolVar(&flagVersion, "V", false, "display version information and exit")
 	flag.StringVar(&flagConfigFile, "config", "data/config.json", "configuration file")
 	flag.IntVar(&flagMaxCpu, "max_cpu", 2, "number of processors to use")
-	flag.IntVar(&flagMaxFetches, "max_fetches", 2, "number of parallel sync fetches")
+	flag.IntVar(&flagMaxFetches, "max_fetches", 1, "number of parallel sync fetches")
 	flag.StringVar(&flagLogLevel, "log_level", "error", "log level for console logs [trace,debug,info,warn,error,fatal]")
 	flag.BoolVar(&flagPrettifyJson, "prettify", false, "prettify json output")
 }
