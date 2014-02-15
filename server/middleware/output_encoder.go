@@ -1,3 +1,5 @@
+// original code from https://github.com/PuerkitoBio/martini-api-example
+
 package middleware
 
 import (
