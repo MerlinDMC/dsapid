@@ -33,6 +33,7 @@ func (me *imgapiEncoder) Encode(manifest *dsapid.ManifestResource) interface{} {
 		Description:  manifest.Description,
 		Os:           manifest.Os,
 		Type:         manifest.Type,
+		Homepage:     manifest.Homepage,
 		Urn:          manifest.Urn,
 		State:        manifest.State,
 		Disabled:     manifest.Disabled,

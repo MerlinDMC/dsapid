@@ -17,6 +17,7 @@ type imgapiManifest struct {
 	Description  string               `json:"description"`
 	Os           string               `json:"os"`
 	Type         dsapid.ManifestType  `json:"type"`
+	Homepage     string               `json:"homepage,omitempty"`
 	Urn          string               `json:"urn,omitempty"`
 	State        dsapid.ManifestState `json:"state"`
 	Disabled     bool                 `json:"disabled"`
