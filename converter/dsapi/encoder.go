@@ -33,6 +33,7 @@ func (me *dsapiEncoder) Encode(manifest *dsapid.ManifestResource) interface{} {
 		Description:  manifest.Description,
 		Os:           manifest.Os,
 		Type:         manifest.Type,
+		Homepage:     manifest.Homepage,
 		Urn:          manifest.Urn,
 		PublishedAt:  manifest.PublishedAt,
 		CreatedAt:    manifest.CreatedAt,

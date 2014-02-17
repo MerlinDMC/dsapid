@@ -12,6 +12,7 @@ type dsapiManifest struct {
 	Description  string              `json:"description"`
 	Os           string              `json:"os"`
 	Type         dsapid.ManifestType `json:"type"`
+	Homepage     string              `json:"homepage,omitempty"`
 	Urn          string              `json:"urn,omitempty"`
 	PublishedAt  time.Time           `json:"published_at"`
 	CreatedAt    time.Time           `json:"created_at"`
