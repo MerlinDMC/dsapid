@@ -21,6 +21,12 @@ func ApiPostDatasetUpdate(encoder middleware.OutputEncoder, params martini.Param
 			manifest.State = dsapid.ManifestStateActive
 			manifest.Disabled = false
 			break
+		case "deprecate":
+			logger.Infof("deprecating image %s (user=%s)", manifest.Uuid, user.GetId())
+
+			manifest.State = dsapid.ManifestStateDeprecated
+			manifest.Disabled = false
+			break
 		case "disable":
 			logger.Infof("disabling image %s (user=%s)", manifest.Uuid, user.GetId())
 
