@@ -26,6 +26,7 @@ TODO
 
 Version history
 ---------------
+0.6.4: changes to the syncer to accept a provider tag from dsapi sources
 0.6.2: make code repository public
 
 Changes from earlier versions (0.1.x)
