@@ -48,7 +48,13 @@ func main() {
 
 	logger.SetName("dsapid")
 
-	switch flagLogLevel {
+	var config Config = DefaultConfig()
+
+	if err := config.Load(flagConfigFile); err != nil {
+		os.Exit(1)
+	}
+
+	switch config.LogLevel {
 	case "trace":
 		logger.SetLevel(logger.TRACE)
 		break
@@ -67,12 +73,6 @@ func main() {
 	case "fatal":
 		logger.SetLevel(logger.FATAL)
 		break
-	}
-
-	var config Config = DefaultConfig()
-
-	if err := config.Load(flagConfigFile); err != nil {
-		os.Exit(1)
 	}
 
 	runtime.GOMAXPROCS(flagMaxCpu)

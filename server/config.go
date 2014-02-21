@@ -10,6 +10,7 @@ import (
 
 type Config struct {
 	Hostname string `json:"hostname"`
+	LogLevel string `json:"log_level,omitempty"`
 	BaseUrl  string `json:"base_url,omitempty"`
 	MountUi  string `json:"mount_ui,omitempty"`
 
@@ -30,6 +31,7 @@ type protoConfig struct {
 func DefaultConfig() Config {
 	return Config{
 		Hostname: "localhost",
+		LogLevel: flagLogLevel,
 		BaseUrl:  "http://localhost:8000/",
 		Listen: map[string]protoConfig{
 			"http": protoConfig{
