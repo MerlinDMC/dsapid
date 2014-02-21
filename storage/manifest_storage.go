@@ -18,6 +18,7 @@ type ManifestStorage interface {
 	Add(string, *dsapid.ManifestResource) error
 	Update(string, *dsapid.ManifestResource) error
 	Delete(string)
+	Reload()
 	Get(string) *dsapid.ManifestResource
 	GetOK(string) (*dsapid.ManifestResource, bool)
 	List() chan *dsapid.ManifestResource
@@ -84,6 +85,16 @@ func (me *filesystemManifestStorage) Delete(id string) {
 	os.RemoveAll(path.Join(me.basedir, id))
 
 	me.delete(id)
+}
+
+func (me *filesystemManifestStorage) Reload() {
+	for k := range me.manifests {
+		delete(me.manifests, k)
+	}
+
+	me.byDate = make([]*dsapid.ManifestResource, 0)
+
+	me.load()
 }
 
 func (me *filesystemManifestStorage) Get(id string) *dsapid.ManifestResource {

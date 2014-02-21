@@ -50,3 +50,13 @@ func ApiPostDatasetUpdate(encoder middleware.OutputEncoder, params martini.Param
 		"error": "update failed",
 	})
 }
+
+func ApiPostReloadDatasets(encoder middleware.OutputEncoder, manifests storage.ManifestStorage, user middleware.User, req *http.Request) (int, []byte) {
+	logger.Infof("reloading datasets")
+
+	manifests.Reload()
+
+	return http.StatusOK, encoder.MustEncode(dsapid.Table{
+		"ok": "datasets reloaded",
+	})
+}
