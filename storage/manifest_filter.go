@@ -33,6 +33,12 @@ func FilterManifestName(value string) ManifestFilter {
 	}
 }
 
+func FilterManifestVersion(value string) ManifestFilter {
+	return func(manifest *dsapid.ManifestResource) bool {
+		return strings.HasPrefix(manifest.Version, value)
+	}
+}
+
 func FilterManifestOs(value string) ManifestFilter {
 	return func(manifest *dsapid.ManifestResource) bool {
 		return strings.HasPrefix(manifest.Os, value)

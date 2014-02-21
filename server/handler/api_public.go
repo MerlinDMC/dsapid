@@ -28,6 +28,10 @@ func ApiDatasetsList(encoder middleware.OutputEncoder, params martini.Params, ma
 		filters = append(filters, storage.FilterManifestName(v))
 	}
 
+	if v := req.URL.Query().Get("version"); v != "" {
+		filters = append(filters, storage.FilterManifestVersion(v))
+	}
+
 	if v := req.URL.Query().Get("os"); v != "" {
 		filters = append(filters, storage.FilterManifestOs(v))
 	}
