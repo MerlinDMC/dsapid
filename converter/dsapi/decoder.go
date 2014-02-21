@@ -55,10 +55,14 @@ func (me *dsapiDecoder) Decode(data dsapid.Table) *dsapid.ManifestResource {
 
 	manifest.Owner = user.Uuid
 
-	if user.Provider != "" {
-		manifest.Provider = user.Provider
+	if v, ok := data["provider"]; ok {
+		manifest.Provider = dsapid.SyncProvider(v.(string))
 	} else {
-		manifest.Provider = me.provider
+		if user.Provider != "" {
+			manifest.Provider = user.Provider
+		} else {
+			manifest.Provider = me.provider
+		}
 	}
 
 	if v, ok := data["uuid"]; ok {

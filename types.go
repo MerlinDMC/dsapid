@@ -143,6 +143,7 @@ const (
 	SyncProviderElys      SyncProvider = "elys"
 	SyncProviderCommunity SyncProvider = "community"
 	SyncProviderTesting   SyncProvider = "testing"
+	SyncProviderUnknown   SyncProvider = "unknown"
 
 	ManifestStatePending    ManifestState = "pending"
 	ManifestStateActive     ManifestState = "active"
