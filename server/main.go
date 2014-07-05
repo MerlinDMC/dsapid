@@ -11,7 +11,7 @@ import (
 	"github.com/MerlinDMC/dsapid/server/middleware"
 	dsapid_sync "github.com/MerlinDMC/dsapid/server/sync"
 	"github.com/MerlinDMC/dsapid/storage"
-	"github.com/codegangsta/martini"
+	"github.com/go-martini/martini"
 	"net/http"
 	"os"
 	"runtime"

@@ -5,7 +5,7 @@ import (
 	"github.com/MerlinDMC/dsapid"
 	"github.com/MerlinDMC/dsapid/server/logger"
 	"github.com/MerlinDMC/dsapid/storage"
-	"github.com/codegangsta/martini"
+	"github.com/go-martini/martini"
 	"net/http"
 	"strings"
 )

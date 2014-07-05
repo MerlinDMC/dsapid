@@ -10,7 +10,7 @@ import (
 	"github.com/MerlinDMC/dsapid/server/logger"
 	"github.com/MerlinDMC/dsapid/server/middleware"
 	"github.com/MerlinDMC/dsapid/storage"
-	"github.com/codegangsta/martini"
+	"github.com/go-martini/martini"
 	"io"
 	"net/http"
 	"os"

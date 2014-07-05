@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"github.com/MerlinDMC/dsapid/server/logger"
-	"github.com/codegangsta/martini"
+	"github.com/go-martini/martini"
 	"net"
 	"net/http"
 )

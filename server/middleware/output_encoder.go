@@ -4,7 +4,7 @@ package middleware
 
 import (
 	"encoding/json"
-	"github.com/codegangsta/martini"
+	"github.com/go-martini/martini"
 	"net/http"
 	"strings"
 )

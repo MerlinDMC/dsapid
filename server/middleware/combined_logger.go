@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"fmt"
-	"github.com/codegangsta/martini"
+	"github.com/go-martini/martini"
 	"log"
 	"net"
 	"net/http"
