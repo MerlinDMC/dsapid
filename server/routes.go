@@ -4,7 +4,7 @@ import (
 	"github.com/MerlinDMC/dsapid"
 	"github.com/MerlinDMC/dsapid/server/handler"
 	"github.com/MerlinDMC/dsapid/server/middleware"
-	"github.com/codegangsta/martini"
+	"github.com/go-martini/martini"
 )
 
 func registerRoutes(router martini.Router) {
