@@ -147,7 +147,7 @@ func (me *filesystemManifestStorage) ManifestPath(manifest *dsapid.ManifestResou
 }
 
 func (me *filesystemManifestStorage) FilePath(manifest *dsapid.ManifestResource, file *dsapid.ManifestFileResource) string {
-	return path.Join(me.basedir, manifest.Uuid, file.Path)
+	return path.Join(me.basedir, manifest.Uuid, path.Base(file.Path))
 }
 
 func (me *filesystemManifestStorage) add(id string, manifest *dsapid.ManifestResource) {
