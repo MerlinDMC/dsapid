@@ -32,6 +32,12 @@ func registerRoutes(router martini.Router) {
 	router.Post("/api/reload/datasets", middleware.RequireRoles(dsapid.UserRoleDatasetAdmin), handler.ApiPostReloadDatasets)
 	router.Post("/api/datasets/:id", middleware.RequireRoles(dsapid.UserRoleDatasetManage), handler.ApiPostDatasetUpdate)
 
+	// private api - users
+	router.Get("/api/users", middleware.RequireAdmin(), handler.ApiGetUsers)
+	router.Put("/api/users", middleware.RequireAdmin(), handler.ApiPutUsers)
+	router.Post("/api/users/:id", middleware.RequireAdmin(), handler.ApiUpdateUser)
+	router.Delete("/api/users/:id", middleware.RequireAdmin(), handler.ApiDeleteUser)
+
 	// private api - upload
 	router.Post("/api/upload", middleware.RequireRoles(dsapid.UserRoleDatasetUpload), handler.ApiPostFileUpload)
 }

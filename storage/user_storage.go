@@ -10,6 +10,7 @@ import (
 type UserStorage interface {
 	Save() error
 	Add(string, *dsapid.UserResource)
+	Update(string, *dsapid.UserResource)
 	Delete(string)
 	EnsureExists(string, string) *dsapid.UserResource
 	Get(string) *dsapid.UserResource
@@ -51,6 +52,12 @@ func (me *jsonUserStorage) Save() error {
 }
 
 func (me *jsonUserStorage) Add(id string, user *dsapid.UserResource) {
+	me.add(id, *user)
+	me.save()
+}
+
+func (me *jsonUserStorage) Update(id string, user *dsapid.UserResource) {
+	me.delete(id)
 	me.add(id, *user)
 	me.save()
 }
