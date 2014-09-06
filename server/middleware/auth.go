@@ -6,6 +6,7 @@ import (
 	"github.com/MerlinDMC/dsapid/server/logger"
 	"github.com/MerlinDMC/dsapid/storage"
 	"github.com/go-martini/martini"
+	"net"
 	"net/http"
 	"strings"
 )
@@ -66,6 +67,23 @@ func RequireRoles(roles ...dsapid.UserRoleName) martini.Handler {
 		logger.Debugf("checking roles on user %s (%s)", user.GetId(), user.GetName())
 
 		if user.IsGuest() || !user.HasRoles(roles...) {
+			http.Error(res, "Not allowed", http.StatusUnauthorized)
+		}
+	}
+}
+
+func RequireAdmin() martini.Handler {
+	return func(req *http.Request, res http.ResponseWriter, user User) {
+		remote_host := req.RemoteAddr
+
+		if host, _, err := net.SplitHostPort(req.RemoteAddr); err == nil {
+			remote_host = host
+		}
+
+		logger.Debugf("checking roles on user %s (%s) from %s", user.GetId(), user.GetName(), remote_host)
+
+		if (user.IsGuest() || !user.HasRoles(dsapid.UserRoleAdmin)) &&
+			remote_host != "127.0.0.1" && remote_host != "[::1]" {
 			http.Error(res, "Not allowed", http.StatusUnauthorized)
 		}
 	}
