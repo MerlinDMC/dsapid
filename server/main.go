@@ -10,7 +10,7 @@ import (
 	"github.com/MerlinDMC/dsapid/server/middleware"
 	dsapid_sync "github.com/MerlinDMC/dsapid/server/sync"
 	"github.com/MerlinDMC/dsapid/storage"
-	log "github.com/Sirupsen/logrus"
+	log "github.com/MerlinDMC/logrus"
 	"github.com/go-martini/martini"
 	"net/http"
 	"os"
@@ -110,6 +110,8 @@ func main() {
 
 	switch config.LogLevel {
 	case "trace", "debug", "info":
+		log.Debug("adding request logger")
+
 		handler.Use(middleware.LogrusLogger())
 		break
 	}

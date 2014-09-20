@@ -6,7 +6,7 @@ import (
 	"encoding/hex"
 	"github.com/MerlinDMC/dsapid"
 	"github.com/MerlinDMC/dsapid/storage"
-	log "github.com/Sirupsen/logrus"
+	log "github.com/MerlinDMC/logrus"
 	"io"
 	"net/url"
 	"os"

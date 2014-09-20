@@ -5,7 +5,7 @@ import (
 	"github.com/MerlinDMC/dsapid/converter"
 	"github.com/MerlinDMC/dsapid/server/middleware"
 	"github.com/MerlinDMC/dsapid/storage"
-	log "github.com/Sirupsen/logrus"
+	log "github.com/MerlinDMC/logrus"
 	"github.com/go-martini/martini"
 	"net/http"
 )
