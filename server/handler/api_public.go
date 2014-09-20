@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/MerlinDMC/dsapid/converter"
-	"github.com/MerlinDMC/dsapid/server/logger"
 	"github.com/MerlinDMC/dsapid/server/middleware"
 	"github.com/MerlinDMC/dsapid/storage"
+	log "github.com/Sirupsen/logrus"
 	"github.com/go-martini/martini"
 	"io"
 	"net/http"
@@ -88,7 +88,7 @@ func ApiDatasetExport(encoder middleware.OutputEncoder, params martini.Params, m
 				})
 
 				if _, err := io.Copy(tw, fin); err != nil {
-					logger.Errorf("failed to create tar streaming archive: %s", err)
+					log.Errorf("failed to create tar streaming archive: %s", err)
 				}
 			}
 		}

@@ -3,8 +3,8 @@ package middleware
 import (
 	"encoding/base64"
 	"github.com/MerlinDMC/dsapid"
-	"github.com/MerlinDMC/dsapid/server/logger"
 	"github.com/MerlinDMC/dsapid/storage"
+	log "github.com/Sirupsen/logrus"
 	"github.com/go-martini/martini"
 	"net"
 	"net/http"
@@ -42,12 +42,18 @@ func Auth(user_storage storage.UserStorage) martini.Handler {
 			}
 
 			if token != "" {
-				logger.Debugf("got auth token '%s'", token)
+				log.WithFields(log.Fields{
+					"token": token,
+				}).Info("got auth token")
 
 				if v, err := user_storage.FindByToken(token); err == nil {
 					user = v
 
-					logger.Debugf("found matching user %s (%s)", user.Uuid, user.Name)
+					log.WithFields(log.Fields{
+						"token": token,
+						"uuid":  user.GetId(),
+						"name":  user.GetName(),
+					}).Info("found matching user")
 				}
 			}
 		}
@@ -63,8 +69,18 @@ func Auth(user_storage storage.UserStorage) martini.Handler {
 }
 
 func RequireRoles(roles ...dsapid.UserRoleName) martini.Handler {
-	return func(res http.ResponseWriter, user User) {
-		logger.Debugf("checking roles on user %s (%s)", user.GetId(), user.GetName())
+	return func(req *http.Request, res http.ResponseWriter, user User) {
+		remote_host := req.RemoteAddr
+
+		if host, _, err := net.SplitHostPort(req.RemoteAddr); err == nil {
+			remote_host = host
+		}
+
+		log.WithFields(log.Fields{
+			"uuid":        user.GetId(),
+			"name":        user.GetName(),
+			"remote_addr": remote_host,
+		}).Info("checking roles on user")
 
 		if user.IsGuest() || !user.HasRoles(roles...) {
 			http.Error(res, "Not allowed", http.StatusUnauthorized)
@@ -80,7 +96,11 @@ func RequireAdmin() martini.Handler {
 			remote_host = host
 		}
 
-		logger.Debugf("checking roles on user %s (%s) from %s", user.GetId(), user.GetName(), remote_host)
+		log.WithFields(log.Fields{
+			"uuid":        user.GetId(),
+			"name":        user.GetName(),
+			"remote_addr": remote_host,
+		}).Info("checking if user is admin")
 
 		if (user.IsGuest() || !user.HasRoles(dsapid.UserRoleAdmin)) &&
 			remote_host != "127.0.0.1" && remote_host != "[::1]" {

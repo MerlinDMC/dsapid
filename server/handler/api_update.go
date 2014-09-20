@@ -3,9 +3,9 @@ package handler
 import (
 	"github.com/MerlinDMC/dsapid"
 	"github.com/MerlinDMC/dsapid/converter"
-	"github.com/MerlinDMC/dsapid/server/logger"
 	"github.com/MerlinDMC/dsapid/server/middleware"
 	"github.com/MerlinDMC/dsapid/storage"
+	log "github.com/Sirupsen/logrus"
 	"github.com/go-martini/martini"
 	"net/http"
 )
@@ -16,25 +16,49 @@ func ApiPostDatasetUpdate(encoder middleware.OutputEncoder, params martini.Param
 	if manifest, ok := manifests.GetOK(params["id"]); ok && action != "" {
 		switch action {
 		case "enable":
-			logger.Infof("enabling image %s (user=%s)", manifest.Uuid, user.GetId())
+			log.WithFields(log.Fields{
+				"user_uuid":     user.GetId(),
+				"user_name":     user.GetName(),
+				"image_uuid":    manifest.Uuid,
+				"image_name":    manifest.Name,
+				"image_version": manifest.Version,
+			}).Info("enabling image")
 
 			manifest.State = dsapid.ManifestStateActive
 			manifest.Disabled = false
 			break
 		case "deprecate":
-			logger.Infof("deprecating image %s (user=%s)", manifest.Uuid, user.GetId())
+			log.WithFields(log.Fields{
+				"user_uuid":     user.GetId(),
+				"user_name":     user.GetName(),
+				"image_uuid":    manifest.Uuid,
+				"image_name":    manifest.Name,
+				"image_version": manifest.Version,
+			}).Info("deprecating image")
 
 			manifest.State = dsapid.ManifestStateDeprecated
 			manifest.Disabled = false
 			break
 		case "disable":
-			logger.Infof("disabling image %s (user=%s)", manifest.Uuid, user.GetId())
+			log.WithFields(log.Fields{
+				"user_uuid":     user.GetId(),
+				"user_name":     user.GetName(),
+				"image_uuid":    manifest.Uuid,
+				"image_name":    manifest.Name,
+				"image_version": manifest.Version,
+			}).Info("disabling image")
 
 			manifest.State = dsapid.ManifestStateDisabled
 			manifest.Disabled = true
 			break
 		case "nuke":
-			logger.Infof("nuking image %s (user=%s)", manifest.Uuid, user.GetId())
+			log.WithFields(log.Fields{
+				"user_uuid":     user.GetId(),
+				"user_name":     user.GetName(),
+				"image_uuid":    manifest.Uuid,
+				"image_name":    manifest.Name,
+				"image_version": manifest.Version,
+			}).Info("nuking image")
 
 			manifest.State = dsapid.ManifestStateNuked
 			manifest.Disabled = true
@@ -52,7 +76,10 @@ func ApiPostDatasetUpdate(encoder middleware.OutputEncoder, params martini.Param
 }
 
 func ApiPostReloadDatasets(encoder middleware.OutputEncoder, manifests storage.ManifestStorage, user middleware.User, req *http.Request) (int, []byte) {
-	logger.Infof("reloading datasets")
+	log.WithFields(log.Fields{
+		"user_uuid": user.GetId(),
+		"user_name": user.GetName(),
+	}).Info("reloading datasets")
 
 	manifests.Reload()
 

@@ -7,10 +7,10 @@ import (
 	"github.com/MerlinDMC/dsapid/converter"
 	"github.com/MerlinDMC/dsapid/converter/dsapi"
 	"github.com/MerlinDMC/dsapid/converter/imgapi"
-	"github.com/MerlinDMC/dsapid/server/logger"
 	"github.com/MerlinDMC/dsapid/server/middleware"
 	dsapid_sync "github.com/MerlinDMC/dsapid/server/sync"
 	"github.com/MerlinDMC/dsapid/storage"
+	log "github.com/Sirupsen/logrus"
 	"github.com/go-martini/martini"
 	"net/http"
 	"os"
@@ -32,7 +32,7 @@ func init() {
 	flag.StringVar(&flagConfigFile, "config", "data/config.json", "configuration file")
 	flag.IntVar(&flagMaxCpu, "max_cpu", 2, "number of processors to use")
 	flag.IntVar(&flagMaxFetches, "max_fetches", 1, "number of parallel sync fetches")
-	flag.StringVar(&flagLogLevel, "log_level", "error", "log level for console logs [trace,debug,info,warn,error,fatal]")
+	flag.StringVar(&flagLogLevel, "log_level", "error", "log level for console logs [debug,info,warn,error,fatal,panic]")
 	flag.BoolVar(&flagPrettifyJson, "prettify", false, "prettify json output")
 }
 
@@ -46,7 +46,8 @@ func main() {
 		os.Exit(0)
 	}
 
-	logger.SetName("dsapid")
+	log.SetFormatter(&log.JSONFormatter{})
+	log.SetOutput(os.Stderr)
 
 	var config Config = DefaultConfig()
 
@@ -55,23 +56,23 @@ func main() {
 	}
 
 	switch config.LogLevel {
-	case "trace":
-		logger.SetLevel(logger.TRACE)
-		break
-	case "debug":
-		logger.SetLevel(logger.DEBUG)
+	case "trace", "debug":
+		log.SetLevel(log.DebugLevel)
 		break
 	case "info":
-		logger.SetLevel(logger.INFO)
+		log.SetLevel(log.InfoLevel)
 		break
 	case "warn":
-		logger.SetLevel(logger.WARN)
+		log.SetLevel(log.WarnLevel)
 		break
 	case "error":
-		logger.SetLevel(logger.ERROR)
+		log.SetLevel(log.ErrorLevel)
 		break
 	case "fatal":
-		logger.SetLevel(logger.FATAL)
+		log.SetLevel(log.FatalLevel)
+		break
+	case "panic":
+		log.SetLevel(log.PanicLevel)
 		break
 	}
 
@@ -84,10 +85,14 @@ func main() {
 	handler := martini.New()
 	handler.Action(router.Handle)
 
-	logger.Debugf("loading users from %s", config.UsersConfig)
+	log.WithFields(log.Fields{
+		"config": config.UsersConfig,
+	}).Debug("loading users")
 	user_storage := storage.NewUserStorage(config.UsersConfig)
 
-	logger.Debugf("loading datasets from %s", config.DataDir)
+	log.WithFields(log.Fields{
+		"directory": config.DataDir,
+	}).Debug("loading datasets")
 	manifest_storage := storage.NewManifestStorage(config.DataDir)
 
 	sync_manager := dsapid_sync.NewManager(flagMaxFetches, user_storage, manifest_storage)
@@ -103,8 +108,10 @@ func main() {
 	handler.Use(middleware.EncodeOutput(flagPrettifyJson))
 	handler.Use(middleware.Auth(user_storage))
 
-	if logger.GetLevel() <= logger.INFO {
-		handler.Use(middleware.JsonLogger())
+	switch config.LogLevel {
+	case "trace", "debug", "info":
+		handler.Use(middleware.LogrusLogger())
+		break
 	}
 
 	if config.MountUi != "" {
@@ -126,7 +133,7 @@ func main() {
 	}
 
 	if err := sync_manager.Run(); err != nil {
-		logger.Fatalf("error starting sync manager: %s", err)
+		log.Fatalf("error starting sync manager: %s", err)
 
 		os.Exit(2)
 	}
@@ -136,29 +143,29 @@ func main() {
 	for server_name, server_config := range config.Listen {
 		wg.Add(1)
 
-		logger.Infof("starting server %s...", server_name)
+		log.Infof("starting server %s...", server_name)
 
 		go startServer(server_config, handler, &wg)
 	}
 
-	logger.Infof("server running - waiting for shutdown")
+	log.Infof("server running - waiting for shutdown")
 
 	wg.Wait()
 }
 
 func startServer(config protoConfig, handler http.Handler, wg *sync.WaitGroup) (err error) {
 	if config.UseSSL {
-		logger.Debugf("starting with ssl enabled at address %s", config.ListenAddress)
+		log.Debugf("starting with ssl enabled at address %s", config.ListenAddress)
 
 		err = http.ListenAndServeTLS(config.ListenAddress, config.Cert, config.Key, handler)
 	} else {
-		logger.Debugf("starting at address %s", config.ListenAddress)
+		log.Debugf("starting at address %s", config.ListenAddress)
 
 		err = http.ListenAndServe(config.ListenAddress, handler)
 	}
 
 	if err != nil {
-		logger.Errorf("server terminated: %s", err)
+		log.Errorf("server terminated: %s", err)
 	}
 
 	wg.Done()

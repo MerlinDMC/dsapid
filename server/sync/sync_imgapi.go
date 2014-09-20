@@ -7,8 +7,8 @@ import (
 	"github.com/MerlinDMC/dsapid"
 	"github.com/MerlinDMC/dsapid/converter"
 	"github.com/MerlinDMC/dsapid/converter/imgapi"
-	"github.com/MerlinDMC/dsapid/server/logger"
 	"github.com/MerlinDMC/dsapid/storage"
+	log "github.com/Sirupsen/logrus"
 	"net/http"
 	"net/url"
 	"time"
@@ -49,7 +49,9 @@ func (me *imgapiSyncer) Init(queue chan *syncerDownloadJob) error {
 		me.decoder = v
 	}
 
-	logger.Infof("initialized syncer: %s", me.source.Name)
+	log.WithFields(log.Fields{
+		"name": me.source.Name,
+	}).Info("initialized syncer")
 
 	return nil
 }
@@ -73,19 +75,25 @@ func (me *imgapiSyncer) Run(stop chan struct{}) error {
 			case <-stop:
 				return
 			case <-tick:
-				logger.Infof("sync started for: %s", me.source.Name)
+				log.WithFields(log.Fields{
+					"name": me.source.Name,
+				}).Info("sync started")
 
 				if res, err := me.client.Get(me.source.Source); err == nil {
 					var entries []dsapid.Table
 
 					if err = json.NewDecoder(res.Body).Decode(&entries); err != nil {
-						logger.Errorf("sync error: %s", err)
+						log.WithFields(log.Fields{
+							"name": me.source.Name,
+						}).Errorf("sync error: %s", err)
 					}
 
 				nextItem:
 					for _, item := range entries {
 						if manifest := me.decoder.Decode(item); manifest == nil {
-							logger.Errorf("sync error: can't decode manifest")
+							log.WithFields(log.Fields{
+								"name": me.source.Name,
+							}).Error("sync error: can't decode manifest")
 
 							continue nextItem
 						} else {
@@ -116,10 +124,14 @@ func (me *imgapiSyncer) Run(stop chan struct{}) error {
 						}
 					}
 				} else {
-					logger.Errorf("sync error: %s", err)
+					log.WithFields(log.Fields{
+						"name": me.source.Name,
+					}).Errorf("sync error: %s", err)
 				}
 
-				logger.Infof("sync finished for: %s", me.source.Name)
+				log.WithFields(log.Fields{
+					"name": me.source.Name,
+				}).Info("sync finished")
 
 				tick = time.After(delay)
 			}

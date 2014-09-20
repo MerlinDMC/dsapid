@@ -5,13 +5,12 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"github.com/MerlinDMC/dsapid"
-	"github.com/MerlinDMC/dsapid/server/logger"
 	"github.com/MerlinDMC/dsapid/storage"
+	log "github.com/Sirupsen/logrus"
 	"io"
 	"net/url"
 	"os"
 	"os/exec"
-	"strings"
 )
 
 type Syncer interface {
@@ -119,11 +118,15 @@ func (me *syncManager) processDownloadJobs() {
 		select {
 		case <-me.s_stop:
 			// received stop signal -> exit processing loop
-			logger.Info("received stop signal. exiting processing loop.")
+			log.Info("received stop signal. exiting processing loop.")
 			return
 		case job := <-me.q_download:
 			if _, ok := me.manifests.GetOK(job.manifest.Uuid); !ok {
-				logger.Tracef("need to fetch new image: %s (%s v%s)", job.manifest.Uuid, job.manifest.Name, job.manifest.Version)
+				log.WithFields(log.Fields{
+					"image_uuid":    job.manifest.Uuid,
+					"image_name":    job.manifest.Name,
+					"image_version": job.manifest.Version,
+				}).Info("need to fetch new image")
 
 				if err := os.MkdirAll(me.manifests.ManifestPath(job.manifest), 0770); err == nil {
 					for file_idx, src := range job.files {
@@ -132,18 +135,18 @@ func (me *syncManager) processDownloadJobs() {
 					retryFetch:
 						for retry := 0; retry < 3; retry++ {
 							if err := me.downloadManifestFile(src, filename, &job.manifest.Files[file_idx]); err != nil {
-								logger.Errorf("download error: %s", err)
+								log.Errorf("download error: %s", err)
 
 								// .. check size and maybe delete erroneous file
 								if fs, err := os.Stat(filename); err == nil {
 									if fs.Size() >= job.manifest.Files[file_idx].Size {
 										if err := os.Remove(filename); err != nil {
-											logger.Errorf("can't remove erroneous file: %s", err)
+											log.Errorf("can't remove erroneous file: %s", err)
 										}
 									}
 								}
 
-								logger.Infof("retry download on file: %s", src.String())
+								log.Infof("retry download on file: %s", src.String())
 
 								continue retryFetch
 							} else {
@@ -167,7 +170,9 @@ func (me *syncManager) downloadManifestFile(src *url.URL, filename string, file 
 
 	wget := exec.Command("wget", "-c", "--no-check-certificate", src.String(), "-O", filename)
 
-	logger.Debugf("running wget: %s", strings.Join(wget.Args, " "))
+	log.WithFields(log.Fields{
+		"args": wget.Args,
+	}).Debug("running wget to fetch the remote file")
 
 	if err := wget.Run(); err == nil {
 		if file_in, err := os.OpenFile(filename, os.O_RDONLY, 0660); err == nil {
@@ -180,24 +185,30 @@ func (me *syncManager) downloadManifestFile(src *url.URL, filename string, file 
 				sha1_sum := hex.EncodeToString(hash_sha1.Sum(nil))
 
 				if file.Md5 != "" && file.Md5 != md5_sum {
-					logger.Warnf("checksum mismatch: got %s expected %s", md5_sum, file.Md5)
+					log.WithFields(log.Fields{
+						"file_path":     file.Path,
+						"checksum_algo": "md5",
+					}).Warnf("checksum missmatch on uploaded file: got %s expected %s", md5_sum, file.Md5)
 					return ErrChecksumNotMatching
 				}
 
 				if file.Sha1 != "" && file.Sha1 != sha1_sum {
-					logger.Warnf("checksum mismatch: got %s expected %s", sha1_sum, file.Sha1)
+					log.WithFields(log.Fields{
+						"file_path":     file.Path,
+						"checksum_algo": "sha1",
+					}).Warnf("checksum missmatch on uploaded file: got %s expected %s", sha1_sum, file.Sha1)
 					return ErrChecksumNotMatching
 				}
 
 				file.Md5 = md5_sum
 				file.Sha1 = sha1_sum
 			} else {
-				logger.Errorf("%s", err)
+				log.Error(err.Error())
 				return err
 			}
 		}
 	} else {
-		logger.Errorf("%s", err)
+		log.Error(err.Error())
 		return err
 	}
 

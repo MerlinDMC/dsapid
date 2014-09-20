@@ -7,9 +7,9 @@ import (
 	"encoding/json"
 	"github.com/MerlinDMC/dsapid"
 	"github.com/MerlinDMC/dsapid/converter/decoder"
-	"github.com/MerlinDMC/dsapid/server/logger"
 	"github.com/MerlinDMC/dsapid/server/middleware"
 	"github.com/MerlinDMC/dsapid/storage"
+	log "github.com/Sirupsen/logrus"
 	"github.com/go-martini/martini"
 	"io"
 	"net/http"
@@ -27,14 +27,26 @@ func ApiPostFileUpload(encoder middleware.OutputEncoder, params martini.Params, 
 			manifest = decoder.DecodeToManifest(data, dsapid.SyncProviderCommunity, users)
 
 			if _, ok := manifests.GetOK(manifest.Uuid); ok {
-				logger.Infof("uploading duplicate image: %s (%s v%s)", manifest.Uuid, manifest.Name, manifest.Version)
+				log.WithFields(log.Fields{
+					"user_uuid":     user.GetId(),
+					"user_name":     user.GetName(),
+					"image_uuid":    manifest.Uuid,
+					"image_name":    manifest.Name,
+					"image_version": manifest.Version,
+				}).Warn("uploading duplicate image")
 
 				return http.StatusInternalServerError, encoder.MustEncode(dsapid.Table{
 					"error": "image already exists",
 				})
 			}
 
-			logger.Infof("uploading image: %s (%s v%s)", manifest.Uuid, manifest.Name, manifest.Version)
+			log.WithFields(log.Fields{
+				"user_uuid":     user.GetId(),
+				"user_name":     user.GetName(),
+				"image_uuid":    manifest.Uuid,
+				"image_name":    manifest.Name,
+				"image_version": manifest.Version,
+			}).Info("uploading image")
 
 			manifest.PublishedAt = time.Now()
 			manifest.State = dsapid.ManifestStatePending
@@ -62,12 +74,22 @@ func ApiPostFileUpload(encoder middleware.OutputEncoder, params martini.Params, 
 							sha1_sum := hex.EncodeToString(hash_sha1.Sum(nil))
 
 							if manifest.Files[0].Md5 != "" && manifest.Files[0].Md5 != md5_sum {
-								logger.Warnf("checksum mismatch: got %s expected %s", md5_sum, manifest.Files[0].Md5)
+								log.WithFields(log.Fields{
+									"user_uuid":     user.GetId(),
+									"user_name":     user.GetName(),
+									"file_path":     manifest.Files[0].Path,
+									"checksum_algo": "md5",
+								}).Warnf("checksum missmatch on uploaded file: got %s expected %s", md5_sum, manifest.Files[0].Md5)
 								goto errCancel
 							}
 
 							if manifest.Files[0].Sha1 != "" && manifest.Files[0].Sha1 != sha1_sum {
-								logger.Warnf("checksum mismatch: got %s expected %s", sha1_sum, manifest.Files[0].Sha1)
+								log.WithFields(log.Fields{
+									"user_uuid":     user.GetId(),
+									"user_name":     user.GetName(),
+									"file_path":     manifest.Files[0].Path,
+									"checksum_algo": "sha1",
+								}).Warnf("checksum missmatch on uploaded file: got %s expected %s", sha1_sum, manifest.Files[0].Sha1)
 								goto errCancel
 							}
 

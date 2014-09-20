@@ -4,9 +4,9 @@ import (
 	"code.google.com/p/go-uuid/uuid"
 	"encoding/json"
 	"github.com/MerlinDMC/dsapid"
-	"github.com/MerlinDMC/dsapid/server/logger"
 	"github.com/MerlinDMC/dsapid/server/middleware"
 	"github.com/MerlinDMC/dsapid/storage"
+	log "github.com/Sirupsen/logrus"
 	"github.com/go-martini/martini"
 	"io"
 	"io/ioutil"
@@ -63,14 +63,22 @@ func ApiUpdateUser(encoder middleware.OutputEncoder, params martini.Params, user
 	if u, ok := users.GetOK(params["id"]); ok {
 		switch action {
 		case "set_token":
-			logger.Infof("set_token %s=%s (user=%s)", u.Uuid, data, user.GetId())
+			log.WithFields(log.Fields{
+				"user_uuid": user.GetId(),
+				"user_name": user.GetName(),
+				"token":     data,
+			}).Info("setting token for user")
 
 			u.Token = string(data)
 
 			users.Update(u.Uuid, u)
 			break
 		case "add_role":
-			logger.Infof("add_role %s=%s (user=%s)", u.Uuid, data, user.GetId())
+			log.WithFields(log.Fields{
+				"user_uuid": user.GetId(),
+				"user_name": user.GetName(),
+				"new_role":  data,
+			}).Info("adding role to user")
 
 			role_name := dsapid.UserRoleName(data)
 
@@ -81,7 +89,11 @@ func ApiUpdateUser(encoder middleware.OutputEncoder, params martini.Params, user
 			users.Update(u.Uuid, u)
 			break
 		case "remove_role":
-			logger.Infof("remove_role %s=%s (user=%s)", u.Uuid, data, user.GetId())
+			log.WithFields(log.Fields{
+				"user_uuid": user.GetId(),
+				"user_name": user.GetName(),
+				"new_role":  data,
+			}).Info("removing role from user")
 
 			role_name := dsapid.UserRoleName(data)
 
@@ -110,9 +122,20 @@ func ApiUpdateUser(encoder middleware.OutputEncoder, params martini.Params, user
 }
 
 func ApiDeleteUser(encoder middleware.OutputEncoder, params martini.Params, users storage.UserStorage, user middleware.User, req *http.Request) (int, []byte) {
-	users.Delete(params["id"])
+	if u, ok := users.GetOK(params["id"]); ok == true {
+		log.WithFields(log.Fields{
+			"user_uuid": u.GetId(),
+			"user_name": u.GetName(),
+		}).Info("deleting user")
 
-	return http.StatusOK, encoder.MustEncode(dsapid.Table{
-		"ok": "user deleted",
+		users.Delete(u.Uuid)
+
+		return http.StatusOK, encoder.MustEncode(dsapid.Table{
+			"ok": "user deleted",
+		})
+	}
+
+	return http.StatusNotFound, encoder.MustEncode(dsapid.Table{
+		"error": "user not found",
 	})
 }
