@@ -153,6 +153,7 @@ const (
 	ManifestStateNuked      ManifestState = "nuked"
 
 	ManifestTypeZone ManifestType = "zone-dataset"
+	ManifestTypeLx   ManifestType = "lx-dataset"
 	ManifestTypeZvol ManifestType = "zvol"
 
 	CompressionTypeGzip  CompressionType = "gzip"
