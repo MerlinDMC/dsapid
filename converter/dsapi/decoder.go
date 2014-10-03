@@ -131,6 +131,10 @@ func (me *dsapiDecoder) Decode(data dsapid.Table) *dsapid.ManifestResource {
 		manifest.Urn = converter.ComputeUrn(manifest)
 	}
 
+	if v, ok := data["options"]; ok {
+		manifest.Options = dsapid.Table(v.(map[string]interface{}))
+	}
+
 	if manifest.Type == dsapid.ManifestTypeZvol {
 		if v, ok := data["nic_driver"]; ok {
 			manifest.Options["nic_driver"] = v.(string)
