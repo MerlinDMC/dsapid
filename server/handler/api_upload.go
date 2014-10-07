@@ -107,7 +107,7 @@ func ApiPostFileUpload(encoder middleware.OutputEncoder, params martini.Params, 
 	}
 
 errCancel:
-	if manifest.Uuid != "" {
+	if manifest != nil && manifest.Uuid != "" {
 		manifests.Delete(manifest.Uuid)
 	}
 
