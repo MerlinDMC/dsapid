@@ -2,5 +2,5 @@ package dsapid
 
 const (
 	AppName    string = "Dataset Image Server"
-	AppVersion string = "0.6.7"
+	AppVersion string = "0.6.8"
 )
