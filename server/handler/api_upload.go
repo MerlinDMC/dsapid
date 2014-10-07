@@ -20,10 +20,20 @@ import (
 func ApiPostFileUpload(encoder middleware.OutputEncoder, params martini.Params, manifests storage.ManifestStorage, users storage.UserStorage, user middleware.User, req *http.Request) (int, []byte) {
 	var manifest *dsapid.ManifestResource
 
-	if file, _, err := req.FormFile("manifest"); err == nil {
+	if file, _, err := req.FormFile("manifest"); err != nil {
+		log.WithFields(log.Fields{
+			"error": err.Error(),
+		}).Error("there was an error reading the manifest")
+		goto errNoManifest
+	} else {
 		var data dsapid.Table
 
-		if err := json.NewDecoder(file).Decode(&data); err == nil {
+		if err := json.NewDecoder(file).Decode(&data); err != nil {
+			log.WithFields(log.Fields{
+				"error": err.Error(),
+			}).Error("there was an error decoding the manifest")
+			goto errNoManifest
+		} else {
 			manifest = decoder.DecodeToManifest(data, dsapid.SyncProviderCommunity, users)
 
 			if _, ok := manifests.GetOK(manifest.Uuid); ok {
@@ -59,7 +69,12 @@ func ApiPostFileUpload(encoder middleware.OutputEncoder, params martini.Params, 
 				manifest.State = dsapid.ManifestStateActive
 			}
 
-			if file, _, err := req.FormFile("file"); err == nil {
+			if file, _, err := req.FormFile("file"); err != nil {
+				log.WithFields(log.Fields{
+					"error": err.Error(),
+				}).Error("there was an error reading the data file")
+				goto errCancel
+			} else {
 				if err = os.MkdirAll(manifests.ManifestPath(manifest), 0770); err == nil {
 					if file_out, err := os.Create(manifests.FilePath(manifest, &manifest.Files[0])); err == nil {
 						defer file_out.Close()
@@ -111,6 +126,7 @@ errCancel:
 		manifests.Delete(manifest.Uuid)
 	}
 
+errNoManifest:
 	return http.StatusInternalServerError, encoder.MustEncode(dsapid.Table{
 		"error": "upload failed",
 	})
