@@ -1,13 +1,13 @@
 package handler
 
 import (
-	"code.google.com/p/go-uuid/uuid"
 	"encoding/json"
 	"github.com/MerlinDMC/dsapid"
 	"github.com/MerlinDMC/dsapid/server/middleware"
 	"github.com/MerlinDMC/dsapid/storage"
 	log "github.com/MerlinDMC/logrus"
 	"github.com/go-martini/martini"
+	"github.com/pborman/uuid"
 	"io"
 	"io/ioutil"
 	"net/http"

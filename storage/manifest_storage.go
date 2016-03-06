@@ -1,9 +1,9 @@
 package storage
 
 import (
-	"code.google.com/p/go-uuid/uuid"
 	"encoding/json"
 	"github.com/MerlinDMC/dsapid"
+	"github.com/pborman/uuid"
 	"io/ioutil"
 	"os"
 	"path"
