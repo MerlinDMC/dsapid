@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	log "github.com/MerlinDMC/logrus"
+	log "github.com/Sirupsen/logrus"
 	"github.com/go-martini/martini"
 	"net"
 	"net/http"

@@ -10,7 +10,7 @@ import (
 	"github.com/MerlinDMC/dsapid/server/middleware"
 	dsapid_sync "github.com/MerlinDMC/dsapid/server/sync"
 	"github.com/MerlinDMC/dsapid/storage"
-	log "github.com/MerlinDMC/logrus"
+	log "github.com/Sirupsen/logrus"
 	"github.com/go-martini/martini"
 	"net/http"
 	"os"

@@ -9,7 +9,7 @@ import (
 	"github.com/MerlinDMC/dsapid/converter/decoder"
 	"github.com/MerlinDMC/dsapid/server/middleware"
 	"github.com/MerlinDMC/dsapid/storage"
-	log "github.com/MerlinDMC/logrus"
+	log "github.com/Sirupsen/logrus"
 	"github.com/go-martini/martini"
 	"io"
 	"net/http"

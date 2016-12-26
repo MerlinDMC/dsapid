@@ -8,7 +8,7 @@ import (
 	"github.com/MerlinDMC/dsapid/converter"
 	"github.com/MerlinDMC/dsapid/converter/dsapi"
 	"github.com/MerlinDMC/dsapid/storage"
-	log "github.com/MerlinDMC/logrus"
+	log "github.com/Sirupsen/logrus"
 	"net/http"
 	"net/url"
 	"time"

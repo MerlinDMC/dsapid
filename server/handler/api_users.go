@@ -5,7 +5,7 @@ import (
 	"github.com/MerlinDMC/dsapid"
 	"github.com/MerlinDMC/dsapid/server/middleware"
 	"github.com/MerlinDMC/dsapid/storage"
-	log "github.com/MerlinDMC/logrus"
+	log "github.com/Sirupsen/logrus"
 	"github.com/go-martini/martini"
 	"github.com/pborman/uuid"
 	"io"
