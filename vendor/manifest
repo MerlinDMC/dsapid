@@ -26,6 +26,14 @@
 			"notests": true
 		},
 		{
+			"importpath": "github.com/martini-contrib/throttle",
+			"repository": "https://github.com/martini-contrib/throttle",
+			"vcs": "git",
+			"revision": "4353722696ec34d4b8686ef1a6ffaed394fda6c5",
+			"branch": "master",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/pborman/uuid",
 			"repository": "https://github.com/pborman/uuid",
 			"vcs": "git",

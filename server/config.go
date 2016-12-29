@@ -3,9 +3,11 @@ package main
 import (
 	"encoding/json"
 	"github.com/MerlinDMC/dsapid"
+	"github.com/martini-contrib/throttle"
 	"io/ioutil"
 	"os"
 	"path"
+	"time"
 )
 
 type Config struct {
@@ -19,6 +21,10 @@ type Config struct {
 	DataDir     string                      `json:"datadir"`
 	UsersConfig string                      `json:"users"`
 	SyncSources []dsapid.SyncSourceResource `json:"sync,omitempty"`
+
+	Throttle struct {
+		Api throttleConfig `json:"api,omitempty"`
+	} `json:"throttle,omitempty"`
 }
 
 type protoConfig struct {
@@ -26,6 +32,40 @@ type protoConfig struct {
 	UseSSL        bool   `json:"ssl,omitempty"`
 	Key           string `json:"key,omitempty"`
 	Cert          string `json:"cert,omitempty"`
+}
+
+type throttleConfig struct {
+	Limit  uint64   `json:"limit,omitempty"`
+	Within Duration `json:"within,omitempty"`
+}
+
+func (me throttleConfig) ToQuota() *throttle.Quota {
+	if me.Limit == 0 {
+		return &throttle.Quota{
+			Limit:  10,
+			Within: time.Second,
+		}
+	}
+
+	return &throttle.Quota{
+		Limit:  me.Limit,
+		Within: time.Duration(me.Within),
+	}
+}
+
+type Duration time.Duration
+
+func (d *Duration) UnmarshalJSON(data []byte) (err error) {
+	var s string
+	var within time.Duration
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+	within, err = time.ParseDuration(s)
+	if err == nil {
+		*d = Duration(within)
+	}
+	return err
 }
 
 func DefaultConfig() Config {

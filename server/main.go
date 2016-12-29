@@ -80,7 +80,7 @@ func main() {
 
 	router := martini.NewRouter()
 
-	registerRoutes(router)
+	registerRoutes(router, config)
 
 	handler := martini.New()
 	handler.Action(router.Handle)

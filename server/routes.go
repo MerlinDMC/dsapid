@@ -7,7 +7,7 @@ import (
 	"github.com/go-martini/martini"
 )
 
-func registerRoutes(router martini.Router) {
+func registerRoutes(router martini.Router, config Config) {
 	// common
 	router.Get("/ping", handler.CommonPing)
 	router.Get("/status", handler.CommonStatus)
@@ -24,19 +24,25 @@ func registerRoutes(router martini.Router) {
 	router.Get("/images/:id/file:file_idx", handler.ImgapiFile)
 
 	// public api
-	router.Get("/api/datasets", middleware.AllowCORS(), handler.ApiDatasetsList)
-	router.Get("/api/datasets/:id", middleware.AllowCORS(), handler.ApiDatasetsDetail)
-	router.Get("/api/export/:id", handler.ApiDatasetExport)
+	router.Group("/api", func(router martini.Router) {
+		router.Get("/datasets", middleware.AllowCORS(), handler.ApiDatasetsList)
+		router.Get("/datasets/:id", middleware.AllowCORS(), handler.ApiDatasetsDetail)
+		router.Get("/export/:id", handler.ApiDatasetExport)
+	}, middleware.Throttle(config.Throttle.Api.ToQuota()))
 
 	// private api - update
-	router.Post("/api/reload/datasets", middleware.RequireRoles(dsapid.UserRoleDatasetAdmin), handler.ApiPostReloadDatasets)
-	router.Post("/api/datasets/:id", middleware.RequireRoles(dsapid.UserRoleDatasetManage), handler.ApiPostDatasetUpdate)
+	router.Group("/api", func(router martini.Router) {
+		router.Post("/reload/datasets", handler.ApiPostReloadDatasets)
+		router.Post("/datasets/:id", handler.ApiPostDatasetUpdate)
+	}, middleware.RequireRoles(dsapid.UserRoleDatasetAdmin))
 
 	// private api - users
-	router.Get("/api/users", middleware.RequireAdmin(), handler.ApiGetUsers)
-	router.Put("/api/users", middleware.RequireAdmin(), handler.ApiPutUsers)
-	router.Post("/api/users/:id", middleware.RequireAdmin(), handler.ApiUpdateUser)
-	router.Delete("/api/users/:id", middleware.RequireAdmin(), handler.ApiDeleteUser)
+	router.Group("/api", func(router martini.Router) {
+		router.Get("/users", handler.ApiGetUsers)
+		router.Put("/users", handler.ApiPutUsers)
+		router.Post("/users/:id", handler.ApiUpdateUser)
+		router.Delete("/users/:id", handler.ApiDeleteUser)
+	}, middleware.RequireAdmin())
 
 	// private api - upload
 	router.Post("/api/upload", middleware.RequireRoles(dsapid.UserRoleDatasetUpload), handler.ApiPostFileUpload)
