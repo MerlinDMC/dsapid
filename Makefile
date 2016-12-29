@@ -4,7 +4,7 @@ GOPATH = /tmp/go.build.dsapid
 SERVER_BIN = dsapid
 REPOSITORY_BASE = github.com/MerlinDMC
 
-VERSION := $(shell git describe --abbrev=0 --tags --match 'v*' | sed -e 's/^v//')
+VERSION ?= $(shell git describe --abbrev=0 --tags --match 'v*' | sed -e 's/^v//')
 COMMIT := $(shell git rev-parse --short HEAD)
 OWNER ?= merlindmc
 GOOS := linux
