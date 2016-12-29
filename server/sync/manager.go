@@ -3,14 +3,15 @@ package sync
 import (
 	"crypto/md5"
 	"crypto/sha1"
+	"crypto/tls"
 	"encoding/hex"
 	"github.com/MerlinDMC/dsapid"
 	"github.com/MerlinDMC/dsapid/storage"
 	log "github.com/Sirupsen/logrus"
 	"io"
+	"net/http"
 	"net/url"
 	"os"
-	"os/exec"
 )
 
 type Syncer interface {
@@ -33,8 +34,10 @@ type syncerDownloadJob struct {
 
 type syncManager struct {
 	ParallelFetches int
-	users           storage.UserStorage
-	manifests       storage.ManifestStorage
+	client          *http.Client
+
+	users     storage.UserStorage
+	manifests storage.ManifestStorage
 
 	syncer     []Syncer
 	q_download chan *syncerDownloadJob
@@ -54,6 +57,14 @@ func NewManager(parallel_fetches int, users storage.UserStorage, manifests stora
 func (me *syncManager) Init() error {
 	me.syncer = make([]Syncer, 0)
 	me.q_download = make(chan *syncerDownloadJob)
+
+	me.client = &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+		},
+	}
 
 	return nil
 }
@@ -172,19 +183,21 @@ func (me *syncManager) downloadManifestFile(src *url.URL, filename string, file 
 	hash_md5 := md5.New()
 	hash_sha1 := sha1.New()
 
-	wget := exec.Command("wget", "-c", "--no-check-certificate", src.String(), "-O", filename)
-
 	log.WithFields(log.Fields{
-		"args": wget.Args,
-	}).Debug("running wget to fetch the remote file")
+		"src":      src.String(),
+		"filename": filename,
+		"size":     file.Size,
+	}).Info("starting download of manifest file")
 
-	if err := wget.Run(); err == nil {
-		if file_in, err := os.OpenFile(filename, os.O_RDONLY, 0660); err == nil {
-			defer file_in.Close()
+	if wget, err := me.client.Get(src.String()); err == nil {
+		defer wget.Body.Close()
 
-			writer := io.MultiWriter(hash_md5, hash_sha1)
+		if file_out, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY, 0660); err == nil {
+			defer file_out.Close()
 
-			if _, err := io.Copy(writer, file_in); err == nil {
+			writer := io.MultiWriter(file_out, hash_md5, hash_sha1)
+
+			if _, err := io.Copy(writer, wget.Body); err == nil {
 				md5_sum := hex.EncodeToString(hash_md5.Sum(nil))
 				sha1_sum := hex.EncodeToString(hash_sha1.Sum(nil))
 
@@ -192,7 +205,7 @@ func (me *syncManager) downloadManifestFile(src *url.URL, filename string, file 
 					log.WithFields(log.Fields{
 						"file_path":     file.Path,
 						"checksum_algo": "md5",
-					}).Warnf("checksum missmatch on uploaded file: got %s expected %s", md5_sum, file.Md5)
+					}).Warnf("checksum missmatch on downloaded file: got %s expected %s", md5_sum, file.Md5)
 					return ErrChecksumNotMatching
 				}
 
@@ -200,12 +213,18 @@ func (me *syncManager) downloadManifestFile(src *url.URL, filename string, file 
 					log.WithFields(log.Fields{
 						"file_path":     file.Path,
 						"checksum_algo": "sha1",
-					}).Warnf("checksum missmatch on uploaded file: got %s expected %s", sha1_sum, file.Sha1)
+					}).Warnf("checksum missmatch on downloaded file: got %s expected %s", sha1_sum, file.Sha1)
 					return ErrChecksumNotMatching
 				}
 
 				file.Md5 = md5_sum
 				file.Sha1 = sha1_sum
+
+				log.WithFields(log.Fields{
+					"src":      src.String(),
+					"filename": filename,
+					"size":     file.Size,
+				}).Info("finished download of manifest file")
 			} else {
 				log.Error(err.Error())
 				return err
