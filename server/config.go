@@ -28,10 +28,16 @@ type Config struct {
 }
 
 type protoConfig struct {
-	ListenAddress string `json:"address,omitempty"`
-	UseSSL        bool   `json:"ssl,omitempty"`
-	Key           string `json:"key,omitempty"`
-	Cert          string `json:"cert,omitempty"`
+	ListenAddress string     `json:"address,omitempty"`
+	Key           string     `json:"key,omitempty"`
+	Cert          string     `json:"cert,omitempty"`
+	Acme          acmeConfig `json:"acme,omitempty"`
+}
+
+type acmeConfig struct {
+	Email    string   `json:"email,omitempty"`
+	Domains  []string `json:"domains,omitempty"`
+	CacheDir string   `json:"cache_dir,omitempty"`
 }
 
 type throttleConfig struct {
@@ -76,7 +82,6 @@ func DefaultConfig() Config {
 		Listen: map[string]protoConfig{
 			"http": protoConfig{
 				ListenAddress: "0.0.0.0:8000",
-				UseSSL:        false,
 			},
 		},
 	}

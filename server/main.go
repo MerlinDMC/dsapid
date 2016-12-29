@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"flag"
 	"fmt"
 	"github.com/MerlinDMC/dsapid"
@@ -12,6 +13,7 @@ import (
 	"github.com/MerlinDMC/dsapid/storage"
 	log "github.com/Sirupsen/logrus"
 	"github.com/go-martini/martini"
+	"golang.org/x/crypto/acme/autocert"
 	"net/http"
 	"os"
 	"runtime"
@@ -156,7 +158,26 @@ func main() {
 }
 
 func startServer(config protoConfig, handler http.Handler, wg *sync.WaitGroup) (err error) {
-	if config.UseSSL {
+	if config.Acme.Email != "" {
+		log.Debugf("starting with ssl enabled using ACME at address %s", config.ListenAddress)
+
+		certManager := autocert.Manager{
+			Prompt:     autocert.AcceptTOS,
+			Email:      config.Acme.Email,
+			HostPolicy: autocert.HostWhitelist(config.Acme.Domains...),
+			Cache:      autocert.DirCache(config.Acme.CacheDir),
+		}
+
+		server := &http.Server{
+			Addr: config.ListenAddress,
+			TLSConfig: &tls.Config{
+				GetCertificate: certManager.GetCertificate,
+			},
+			Handler: handler,
+		}
+
+		err = server.ListenAndServeTLS("", "")
+	} else if config.Cert != "" && config.Key != "" {
 		log.Debugf("starting with ssl enabled at address %s", config.ListenAddress)
 
 		err = http.ListenAndServeTLS(config.ListenAddress, config.Cert, config.Key, handler)
