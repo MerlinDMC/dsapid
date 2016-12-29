@@ -156,6 +156,10 @@ func (me *syncManager) processDownloadJobs() {
 							}
 						}
 					}
+				} else {
+					log.WithFields(log.Fields{
+						"directory": me.manifests.ManifestPath(job.manifest),
+					}).Error("can't create manifest directory")
 				}
 			}
 
@@ -206,6 +210,9 @@ func (me *syncManager) downloadManifestFile(src *url.URL, filename string, file 
 				log.Error(err.Error())
 				return err
 			}
+		} else {
+			log.Error(err.Error())
+			return err
 		}
 	} else {
 		log.Error(err.Error())
